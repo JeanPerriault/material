@@ -382,27 +382,61 @@ function SliderDirective($$rAF, $window, $mdAria, $mdUtil, $mdConstant, $mdThemi
 
     /**
      * left/right/up/down arrow listener
+     * @param {!KeyboardEvent} ev
      */
     function keydownListener(ev) {
       if (isDisabled()) return;
+      var keyCodes = $mdConstant.KEY_CODE;
 
       var changeAmount;
-      if (vertical ? ev.keyCode === $mdConstant.KEY_CODE.DOWN_ARROW : ev.keyCode === $mdConstant.KEY_CODE.LEFT_ARROW) {
-        changeAmount = -step;
-      } else if (vertical ? ev.keyCode === $mdConstant.KEY_CODE.UP_ARROW : ev.keyCode === $mdConstant.KEY_CODE.RIGHT_ARROW) {
-        changeAmount = step;
+      switch (ev.keyCode) {
+        case keyCodes.DOWN_ARROW:
+        case keyCodes.LEFT_ARROW:
+          ev.preventDefault();
+          changeAmount = -step;
+          break;
+        case keyCodes.UP_ARROW:
+        case keyCodes.RIGHT_ARROW:
+          ev.preventDefault();
+          changeAmount = step;
+          break;
+        case keyCodes.PAGE_DOWN:
+          ev.preventDefault();
+          changeAmount = -step * 4;
+          break;
+        case keyCodes.PAGE_UP:
+          ev.preventDefault();
+          changeAmount = step * 4;
+          break;
+        case keyCodes.HOME:
+          ev.preventDefault();
+          ev.stopPropagation();
+          updateValue(min);
+          break;
+        case keyCodes.END:
+          ev.preventDefault();
+          ev.stopPropagation();
+          updateValue(max);
+          break;
       }
-      changeAmount = invert ? -changeAmount : changeAmount;
       if (changeAmount) {
+        changeAmount = invert ? -changeAmount : changeAmount;
         if (ev.metaKey || ev.ctrlKey || ev.altKey) {
           changeAmount *= 4;
         }
         ev.preventDefault();
         ev.stopPropagation();
-        scope.$evalAsync(function() {
-          setModelValue(ngModelCtrl.$viewValue + changeAmount);
-        });
+        updateValue(ngModelCtrl.$viewValue + changeAmount);
       }
+    }
+
+    /**
+     * @param value new slider value used for setting the model value
+     */
+    function updateValue(value) {
+      scope.$evalAsync(function() {
+        setModelValue(value);
+      });
     }
 
     function mouseDownListener() {
